@@ -951,6 +951,28 @@ func main() {
         Assert-True -Condition ((Get-MagicHandyText -Key 'selected_heading') -ne [string]$catalogs.en.selected_heading) -Message "$locale should translate selected installation heading"
     }
     Set-MagicHandyInstallerLocale -Locale 'en'
+
+    Write-Host 'Checking AMD GPU detection and LLM runtime preference...'
+    $amdAdapters = @(
+        [pscustomobject]@{ Name = 'Microsoft Basic Display Adapter'; AdapterCompatibility = '(Standard display types)' },
+        [pscustomobject]@{ Name = ' AMD Radeon RX 7900 XTX '; AdapterCompatibility = 'Advanced Micro Devices, Inc.' }
+    )
+    Assert-Equal -Expected 'AMD Radeon RX 7900 XTX' -Actual (Get-MagicHandyAMDGPUName -Controllers $amdAdapters) -Message 'AMD adapter should be found by vendor'
+    Assert-Equal -Expected 'Radeon Pro W7800' -Actual (Get-MagicHandyAMDGPUName -Controllers @([pscustomobject]@{ Name = 'Radeon Pro W7800'; AdapterCompatibility = '' })) -Message 'AMD adapter should be found by Radeon name'
+    Assert-Equal -Expected '' -Actual (Get-MagicHandyAMDGPUName -Controllers @([pscustomobject]@{ Name = 'NVIDIA GeForce RTX 4080'; AdapterCompatibility = 'NVIDIA' })) -Message 'NVIDIA adapter is not AMD'
+    Assert-Equal -Expected '' -Actual (Get-MagicHandyAMDGPUName -Controllers @()) -Message 'no adapters means no AMD GPU'
+    foreach ($case in @(
+            @{ NVIDIA = $true; Ollama = $true; AMD = 'AMD Radeon RX 7900 XTX'; Expected = 'managed'; Name = 'NVIDIA keeps managed llama.cpp' },
+            @{ NVIDIA = $false; Ollama = $true; AMD = ''; Expected = 'ollama'; Name = 'existing Ollama without NVIDIA' },
+            @{ NVIDIA = $false; Ollama = $false; AMD = 'AMD Radeon RX 7900 XTX'; Expected = 'ollama'; Name = 'AMD GPU without Ollama' },
+            @{ NVIDIA = $false; Ollama = $true; AMD = 'AMD Radeon RX 7900 XTX'; Expected = 'ollama'; Name = 'AMD GPU with Ollama' },
+            @{ NVIDIA = $false; Ollama = $false; AMD = ''; Expected = 'managed'; Name = 'CPU-only machine keeps managed llama.cpp' }
+        )) {
+        $preference = Resolve-MagicHandyLLMRuntimePreference -HasNVIDIA $case.NVIDIA -HasOllama $case.Ollama -AMDGPUName $case.AMD
+        Assert-Equal -Expected $case.Expected -Actual $preference -Message "runtime preference: $($case.Name)"
+    }
+    Assert-True -Condition ((Get-MagicHandyText -Key 'amd_detected' -Values @('AMD Radeon RX 7900 XTX')).Contains('AMD Radeon RX 7900 XTX')) -Message 'AMD detection message should name the GPU'
+
     foreach ($file in @('install.ps1', 'update.ps1', 'scripts\installer\InstallerSupport.psm1')) {
         $source = [System.IO.File]::ReadAllText((Join-Path $Repo $file))
         Assert-True -Condition (-not $source.Contains("-Question '")) -Message "$file should not pass a literal single-quoted decision prompt"

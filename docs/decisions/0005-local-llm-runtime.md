@@ -146,6 +146,22 @@ The Ollama provider remains supported but secondary. It should:
 
 Ollama should not be removed just because llama.cpp becomes the primary path. It is the escape hatch for unsupported platforms, non-NVIDIA systems, users with existing Ollama libraries, and users who do not want MagicHandy to manage model files.
 
+Without an NVIDIA GPU, managed llama.cpp can only run its CPU backend, which is
+too slow for live chat. Both setup paths therefore default to Ollama there:
+
+- `install.ps1` with `-LlamaBackend auto` skips the managed build and ensures
+  Ollama when `nvidia-smi` is absent and Ollama is already installed or an AMD
+  GPU is detected (`Resolve-MagicHandyLLMRuntimePreference`). It does not
+  prompt; `-LlamaBackend cpu` still forces the managed CPU build.
+- The setup wizard's hardware snapshot reports `amd` (with the AMD GPU name and
+  dedicated memory from the display-adapter registry) and `ollama` (an Ollama
+  executable is installed). Custom setup then starts the chat step on Ollama
+  and marks it recommended, and Easy setup reports `amd_ollama` instead of
+  `no_nvidia`.
+
+Managed llama.cpp Vulkan or ROCm bundles remain out of scope (see below); Ollama
+supplies AMD acceleration until one is worth its packaging and support cost.
+
 An explicit Ollama-to-managed import may read a user-selected Ollama model
 library. It parses content-addressed manifests read-only, accepts only a
 single self-contained GGUF model layer, copies that layer into MagicHandy's

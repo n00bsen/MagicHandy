@@ -1,5 +1,24 @@
 # Goal Scorecard
 
+## 2026-10-23 — Ollama default without an NVIDIA GPU
+
+Without an NVIDIA GPU, `install.ps1 -LlamaBackend auto` uses Ollama instead of
+building CPU-only managed llama.cpp when Ollama is installed or an AMD GPU is
+detected. Setup reports AMD GPUs and an installed Ollama; Custom setup starts
+chat on Ollama there. NVIDIA behavior is unchanged. AMD detection reads the
+display-adapter registry once per setup snapshot through the existing
+`golang.org/x/sys` dependency; no dependency, background task or motion path is
+added. See ADR 0005.
+
+Matching Go 1.27.0 Windows amd64 builds, `CGO_ENABLED=0`, `-trimpath
+-buildvcs=false -ldflags '-s -w'`, against parent `ce349823` (alpha.70) rebuilt
+in an isolated worktree with the same toolchain: core **24,189,440 ->
+24,206,848 B** (+17,408 B, 0.072%). Absolute sizes differ from entries built
+with Go 1.26.x because of the toolchain. Main UI JS is **1,257,746 -> 1,259,778
+B raw** (+2,032 B), **337,726 -> 338,152 B gzip -9** (+426 B). Complete
+canonical embedded UI: **2,731,986 -> 2,738,556 B** (+6,570 B), including five
+locale catalogs. No new RSS/cold-start claim.
+
 ## 2026-10-23 — Immediate holding control
 
 Matched Windows amd64 `CGO_ENABLED=0 -trimpath -buildvcs=false -ldflags '-s -w'`

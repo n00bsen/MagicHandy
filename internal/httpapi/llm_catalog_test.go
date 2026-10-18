@@ -237,6 +237,32 @@ func TestLargestNVIDIAGPUHandlesSeveralCards(t *testing.T) {
 	}
 }
 
+func TestLargestAMDGPUPrefersTheDiscreteCard(t *testing.T) {
+	const gib = 1024 * 1024 * 1024
+	for _, testCase := range []struct {
+		label        string
+		adapters     []displayAdapter
+		name, memory string
+	}{
+		{"discrete beats integrated", []displayAdapter{
+			{Name: "AMD Radeon(TM) Graphics", Vendor: "Advanced Micro Devices, Inc.", MemoryBytes: gib / 2},
+			{Name: "AMD Radeon RX 7900 XTX", Vendor: "Advanced Micro Devices, Inc.", MemoryBytes: 24 * gib},
+		}, "AMD Radeon RX 7900 XTX", "24576"},
+		{"Radeon name without vendor", []displayAdapter{{Name: " Radeon Pro W7800 ", MemoryBytes: 32 * gib}}, "Radeon Pro W7800", "32768"},
+		{"unknown memory", []displayAdapter{{Name: "AMD Radeon RX 6800", Vendor: "AMD"}}, "AMD Radeon RX 6800", ""},
+		{"NVIDIA and basic adapters ignored", []displayAdapter{
+			{Name: "NVIDIA GeForce RTX 4090", Vendor: "NVIDIA", MemoryBytes: 24 * gib},
+			{Name: "Microsoft Basic Display Adapter", Vendor: "Microsoft"},
+		}, "", ""},
+		{"none", nil, "", ""},
+	} {
+		name, memory := largestAMDGPU(testCase.adapters)
+		if name != testCase.name || memory != testCase.memory {
+			t.Errorf("%s: largestAMDGPU = %q, %q; want %q, %q", testCase.label, name, memory, testCase.name, testCase.memory)
+		}
+	}
+}
+
 func setTestHardware(server *Server, hardware map[string]any) {
 	server.setup.hardwareOnce.Do(func() {})
 	server.setup.hardwareMu.Lock()

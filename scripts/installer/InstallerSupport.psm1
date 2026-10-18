@@ -357,6 +357,49 @@ function Resolve-MagicHandyExecutable {
     return $null
 }
 
+# Returns the first AMD display adapter name, or '' when none is present. Tests
+# pass Controllers; installs read Win32_VideoController.
+function Get-MagicHandyAMDGPUName {
+    [CmdletBinding()]
+    param([object[]]$Controllers)
+
+    if ($null -eq $Controllers) {
+        try {
+            $Controllers = @(Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop)
+        } catch {
+            return ''
+        }
+    }
+    foreach ($controller in $Controllers) {
+        $name = ([string]$controller.Name).Trim()
+        $vendor = [string]$controller.AdapterCompatibility
+        if ($vendor -match 'Advanced Micro Devices|^AMD\b' -or $name -match '\bRadeon\b') {
+            return $name
+        }
+    }
+    return ''
+}
+
+# Without an NVIDIA GPU, managed llama.cpp can only run its CPU backend. An
+# existing Ollama, or an AMD GPU that Ollama can accelerate, is the better
+# default there. Returns 'managed' or 'ollama'.
+function Resolve-MagicHandyLLMRuntimePreference {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][bool]$HasNVIDIA,
+        [Parameter(Mandatory = $true)][bool]$HasOllama,
+        [string]$AMDGPUName = ''
+    )
+
+    if ($HasNVIDIA) {
+        return 'managed'
+    }
+    if ($HasOllama -or -not [string]::IsNullOrWhiteSpace($AMDGPUName)) {
+        return 'ollama'
+    }
+    return 'managed'
+}
+
 function Resolve-MagicHandyCMake {
     $cmake = Resolve-MagicHandyExecutable -Name 'cmake'
     if ($cmake) {
@@ -2582,6 +2625,8 @@ Export-ModuleMember -Function @(
     'Read-MagicHandyOptionalValue',
     'Read-MagicHandyBackend',
     'Resolve-MagicHandyExecutable',
+    'Get-MagicHandyAMDGPUName',
+    'Resolve-MagicHandyLLMRuntimePreference',
     'Get-MagicHandyInstallStatePath',
     'Assert-MagicHandyChildPath',
     'Add-MagicHandyGitInfoExclusions',

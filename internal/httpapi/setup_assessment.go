@@ -73,6 +73,11 @@ func (s *Server) assessSetup(ctx context.Context, hardware map[string]any, helpe
 		assessment.FreeDiskBytes = free
 	}
 	assessment.Chat = s.assessSetupChat(ctx, &assessment, windows, nvidia, vram)
+	if amd, _ := hardware["amd"].(bool); amd && assessment.Chat.Reason == "no_nvidia" {
+		// Managed llama.cpp cannot use an AMD GPU, but Ollama can. The verdict
+		// stays unmet for managed chat; the reason points setup at Ollama.
+		assessment.Chat.Reason = "amd_ollama"
+	}
 
 	assessment.VoiceOptions = assessSetupVoice(assessment.Chat, windows && helpers["voice"], nvidia, vram)
 	preferred := assessment.VoiceOptions[0]

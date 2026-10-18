@@ -63,6 +63,11 @@ function chatRequirementText(assessment: SetupAssessment, setup: SetupStatus, ca
         title: t("Local chat needs more graphics memory"),
         detail: t("The smallest tested model needs about {memory}; your {gpu} has {total}. Chat and Autopilot stay off, and Custom setup can connect a chat server on another computer.", { memory: formatBytes((assessment.chat.min_vram_mib ?? 0) * MIB), gpu, total }),
       };
+    case "amd_ollama":
+      return {
+        title: t("Local chat on your {gpu} runs through Ollama", { gpu: setup.hardware.gpu_name || t("AMD GPU") }),
+        detail: t("Managed llama.cpp cannot use AMD graphics cards. Choose Custom setup and Use my existing Ollama to chat on your GPU; Easy setup keeps chat off until then."),
+      };
     case "platform":
       return { title: t("Local chat is not available here"), detail: t("Managed local chat runs on Windows x64. Custom setup can connect a chat server on another computer.") };
     default:
@@ -112,8 +117,8 @@ export function EasySetupStep({ setup, settings, catalog, voiceChoice, voiceInpu
   const voiceInputAvailable = assessment.voice_input.status !== "unmet";
   const needed = setupRequiredBytes(assessment, useLocalAI && settings.llm.provider === "llama_cpp" && settings.llm.llama_cpp_mode === "managed", voiceChoice, voiceInput);
   const shortOfSpace = assessment.free_disk_bytes > 0 && needed > assessment.free_disk_bytes;
-  const hardware = setup.hardware.nvidia
-    ? t("Detected {gpu} with {memory} of graphics memory.", { gpu: setup.hardware.gpu_name || t("NVIDIA GPU"), memory: setup.hardware.vram_mib ? formatBytes(Number(setup.hardware.vram_mib) * MIB) : t("unknown") })
+  const hardware = setup.hardware.nvidia || setup.hardware.amd
+    ? t("Detected {gpu} with {memory} of graphics memory.", { gpu: setup.hardware.gpu_name || (setup.hardware.amd ? t("AMD GPU") : t("NVIDIA GPU")), memory: setup.hardware.vram_mib ? formatBytes(Number(setup.hardware.vram_mib) * MIB) : t("unknown") })
     : t("No NVIDIA graphics card was found.");
   const chatVoice = settings.llm.chat_voice ?? "utility";
   const spaceMessage = needed <= 0

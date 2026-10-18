@@ -1191,6 +1191,9 @@ export interface SetupStatus {
     platform: string;
     nvidia: boolean;
     cuda: boolean;
+    // amd is set only when no NVIDIA GPU was found; gpu_name then names it.
+    amd?: boolean;
+    ollama?: boolean;
     gpu_name?: string;
     vram_mib?: string;
   };

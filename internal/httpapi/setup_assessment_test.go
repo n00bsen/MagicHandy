@@ -29,6 +29,7 @@ func TestSetupAssessmentPicksTheBestModelEachMachineHolds(t *testing.T) {
 		"4 GB NVIDIA":  {map[string]any{"nvidia": true, "vram_mib": "4096"}, all, setupRequirementUnmet, "vram_below", "", setupRequirementMet, setupRequirementMet},
 		"unknown VRAM": {map[string]any{"nvidia": true}, all, setupRequirementPartial, "vram_unknown", catalog[0].ID, setupRequirementPartial, setupRequirementMet},
 		"no NVIDIA":    {map[string]any{"nvidia": false}, all, setupRequirementUnmet, "no_nvidia", "", setupRequirementPartial, setupRequirementMet},
+		"AMD GPU":      {map[string]any{"nvidia": false, "amd": true, "vram_mib": "24560"}, all, setupRequirementUnmet, "amd_ollama", "", setupRequirementPartial, setupRequirementMet},
 		"no helpers":   {map[string]any{"nvidia": true, "vram_mib": "16303"}, map[string]bool{}, setupRequirementMet, "gpu_fits", catalog[0].ID, setupRequirementUnmet, setupRequirementUnmet},
 	} {
 		t.Run(name, func(t *testing.T) {

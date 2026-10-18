@@ -3341,5 +3341,10 @@
   "Resume from gentle hold": "Resume from gentle hold",
   "Edge — gentle hold": "Edge — gentle hold",
   "Return": "Return",
-  "Autopilot returns in {seconds} s": "Autopilot returns in {seconds} s"
+  "Autopilot returns in {seconds} s": "Autopilot returns in {seconds} s",
+  "Detected {gpu}. Managed llama.cpp cannot use AMD graphics cards, but Ollama can, so Ollama is recommended here.": "Detected {gpu}. Managed llama.cpp cannot use AMD graphics cards, but Ollama can, so Ollama is recommended here.",
+  "Managed llama.cpp cannot use your AMD card, so only its CPU backend would run and replies would be too slow for live chat. Choose Ollama to chat on your GPU.": "Managed llama.cpp cannot use your AMD card, so only its CPU backend would run and replies would be too slow for live chat. Choose Ollama to chat on your GPU.",
+  "Local chat on your {gpu} runs through Ollama": "Local chat on your {gpu} runs through Ollama",
+  "Managed llama.cpp cannot use AMD graphics cards. Choose Custom setup and Use my existing Ollama to chat on your GPU; Easy setup keeps chat off until then.": "Managed llama.cpp cannot use AMD graphics cards. Choose Custom setup and Use my existing Ollama to chat on your GPU; Easy setup keeps chat off until then.",
+  "AMD GPU": "AMD GPU"
 }

@@ -3341,5 +3341,10 @@
   "Resume from gentle hold": "从轻柔保持恢复",
   "Edge — gentle hold": "Edge — 轻柔保持",
   "Return": "返回",
-  "Autopilot returns in {seconds} s": "自动模式将在 {seconds} 秒后恢复"
+  "Autopilot returns in {seconds} s": "自动模式将在 {seconds} 秒后恢复",
+  "Detected {gpu}. Managed llama.cpp cannot use AMD graphics cards, but Ollama can, so Ollama is recommended here.": "检测到 {gpu}。托管 llama.cpp 无法使用 AMD 显卡，但 Ollama 可以，因此这里推荐使用 Ollama。",
+  "Managed llama.cpp cannot use your AMD card, so only its CPU backend would run and replies would be too slow for live chat. Choose Ollama to chat on your GPU.": "托管 llama.cpp 无法使用你的 AMD 显卡，只能运行 CPU 后端，回复会慢到无法实时聊天。请选择 Ollama 以使用 GPU 聊天。",
+  "Local chat on your {gpu} runs through Ollama": "你的 {gpu} 上的本地聊天通过 Ollama 运行",
+  "Managed llama.cpp cannot use AMD graphics cards. Choose Custom setup and Use my existing Ollama to chat on your GPU; Easy setup keeps chat off until then.": "托管 llama.cpp 无法使用 AMD 显卡。请选择自定义设置并选择“使用现有 Ollama”以使用 GPU 聊天；在此之前，快速设置会保持聊天关闭。",
+  "AMD GPU": "AMD 显卡"
 }

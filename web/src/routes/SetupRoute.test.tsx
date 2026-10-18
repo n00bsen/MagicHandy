@@ -388,6 +388,17 @@ describe("SetupRoute", () => {
     expect(screen.getByRole("radio", { name: /Managed llama\.cpp/ })).not.toHaveTextContent("Recommended");
   });
 
+  it("starts chat on Ollama when an AMD card is available", async () => {
+    vi.mocked(api.setupStatus).mockResolvedValue({ ...setupFixture, hardware: { platform: "windows/amd64", nvidia: false, cuda: false, amd: true, ollama: true, gpu_name: "AMD Radeon RX 7900 XTX", vram_mib: "24560" } });
+    vi.mocked(api.llmCatalog).mockResolvedValue(catalogFixture("no_gpu", false));
+    await openChatStep();
+
+    await waitFor(() => expect(screen.getByRole("radio", { name: /Use my existing Ollama/ })).toBeChecked());
+    expect(screen.getByRole("radio", { name: /Use my existing Ollama.*Recommended/i })).toBeChecked();
+    expect(screen.getByText(/Detected AMD Radeon RX 7900 XTX\. Managed llama\.cpp cannot use AMD graphics cards/)).toBeVisible();
+    expect(screen.queryByRole("radio", { name: /Managed llama\.cpp.*Recommended/i })).not.toBeInTheDocument();
+  });
+
   it("imports a selected model from an existing Ollama library during managed setup", async () => {
     await openChatStep();
     fireEvent.click(screen.getByText("Import a model file instead"));
@@ -632,6 +643,27 @@ describe("SetupRoute", () => {
       parakeet: true,
       enable_voice: true,
     });
+  });
+
+  it("Easy setup points an AMD card at Ollama", async () => {
+    vi.mocked(api.setupStatus).mockResolvedValue({
+      ...setupFixture,
+      hardware: { platform: "windows/amd64", nvidia: false, cuda: false, amd: true, ollama: true, gpu_name: "AMD Radeon RX 7900 XTX", vram_mib: "24560" },
+      assessment: {
+        free_disk_bytes: 200 * 2 ** 30,
+        chat: { status: "unmet", reason: "amd_ollama", bytes: 0 },
+        voice_output: { status: "partial", reason: "cpu", bytes: 6 * 2 ** 30 },
+        voice_input: { status: "met", reason: "cpu", bytes: 800 * 2 ** 20 },
+        runtime_backend: "cpu", voice_module: "chatterbox", voice_device: "cpu",
+      },
+    });
+    vi.mocked(api.llmCatalog).mockResolvedValue(catalogFixture("no_gpu", false));
+    render(<SetupRoute />);
+    await screen.findByRole("heading", { name: "Set up MagicHandy" });
+    await continueTo("Easy setup");
+
+    expect(screen.getByText("Local chat on your AMD Radeon RX 7900 XTX runs through Ollama")).toBeVisible();
+    expect(screen.getByText(/Detected AMD Radeon RX 7900 XTX with/)).toBeVisible();
   });
 
   it("Easy setup says which requirements a computer without an NVIDIA card misses", async () => {

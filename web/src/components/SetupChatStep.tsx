@@ -73,10 +73,10 @@ export function SetupChatStep(props: SetupChatStepProps) {
   return <div className="setup-copy setup-model-library">
     <SetupSection id="setup-engine-title" title={engineTitle}>
       {!props.localOnly && <p className="hint-block">{t("Choose a local model or a hosted connection. Hosted models do not need a local runtime download.")}</p>}
-      {choice !== "hosted" && <p className="setup-hardware"><span className="status-dot" data-state={setup.hardware.nvidia ? "ok" : "idle"} />{catalogHardwareLine(catalog, setup.hardware.nvidia, setup.hardware.gpu_name)}</p>}
+      {choice !== "hosted" && <p className="setup-hardware"><span className="status-dot" data-state={setup.hardware.nvidia || setup.hardware.amd ? "ok" : "idle"} />{catalogHardwareLine(catalog, setup.hardware.nvidia, setup.hardware.gpu_name, setup.hardware.amd)}</p>}
       <SetupChoiceGroup labelledBy="setup-engine-title" panel={panel}>
         <SetupChoice selected={choice === "managed"} title={props.localOnly ? t("Install a local model") : t("Managed llama.cpp")} detail={t("App-owned, pinned, and checksum-verified. It avoids requiring Ollama or a compiler toolchain.")} badge={setup.hardware.nvidia ? t("Recommended") : undefined} onSelect={() => select("managed")} />
-        <SetupChoice selected={choice === "ollama"} title={props.localOnly ? t("Use my Ollama") : t("Use my existing Ollama")} detail={t("Uses no managed runtime disk. MagicHandy uses your existing Ollama service and model library.")} onSelect={() => select("ollama")} />
+        <SetupChoice selected={choice === "ollama"} title={props.localOnly ? t("Use my Ollama") : t("Use my existing Ollama")} detail={t("Uses no managed runtime disk. MagicHandy uses your existing Ollama service and model library.")} badge={!setup.hardware.nvidia && (setup.hardware.amd || setup.hardware.ollama) ? t("Recommended") : undefined} onSelect={() => select("ollama")} />
         <SetupChoice selected={choice === "external"} title={props.localOnly ? t("Use my own server") : t("External llama.cpp server")} detail={t("Use a compatible server you manage. MagicHandy will not install or own that process.")} onSelect={() => select("external")} />
         {!props.localOnly && <SetupChoice selected={choice === "hosted"} title={t("Hosted model")} badge={t("Experimental")} detail={t("Connect ChatGPT or an API provider. No local model is required.")} onSelect={() => select("hosted")} />}
         {!props.localOnly && <SetupChoice selected={choice === "skip"} title={t("Skip chat model setup")} detail={t("The app remains usable for manual, pattern, and video control.")} onSelect={() => select("skip")} />}
@@ -96,7 +96,9 @@ function ManagedRuntimeRows({ backend, setup, models, locked, setBackend }: Setu
     <FieldRow id="setup-runtime-backend" label={t("Runtime backend")} hint={<>{setup.llama_runtime.disk_estimate} {t("Official Windows bundles need no compiler or CUDA Toolkit. CUDA requires a compatible NVIDIA driver. License: {license}.", { license: setup.llama_runtime.license })}</>}>
       <select id="setup-runtime-backend" aria-describedby="setup-runtime-backend-hint" value={backend} disabled={locked} onChange={(event) => setBackend(event.target.value as RuntimeBackend)}>{setup.llama_runtime.backends.map((value) => <option key={value} value={value}>{value === "auto" ? t("Automatic") : value.toUpperCase()}</option>)}</select>
     </FieldRow>
-    {!setup.hardware.nvidia && <p className="setup-warning form-row-note">{t("Without an NVIDIA card only the CPU backend can run, and replies would be too slow for live chat.")}</p>}
+    {!setup.hardware.nvidia && <p className="setup-warning form-row-note">{setup.hardware.amd
+      ? t("Managed llama.cpp cannot use your AMD card, so only its CPU backend would run and replies would be too slow for live chat. Choose Ollama to chat on your GPU.")
+      : t("Without an NVIDIA card only the CPU backend can run, and replies would be too slow for live chat.")}</p>}
   </>;
 }
 

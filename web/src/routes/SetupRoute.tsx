@@ -98,6 +98,7 @@ export function SetupRoute() {
   const [easyConnectionID, setEasyConnectionID] = useState(() => setupCloudConnectionID(state?.settings?.llm));
   const [modelChoice, setModelChoice] = useState<ManagedModelChoice>("later");
   const chatDefaultsApplied = useRef(false);
+  const ollamaDefaultApplied = useRef(false);
   const [pendingImportID, setPendingImportID] = useState("");
   const [runtimeBackend, setRuntimeBackend] = useState<RuntimeBackend>("auto");
   const [handyModel, setHandyModel] = useState<HandyModel>(() => initialHandyModel(state?.settings));
@@ -227,7 +228,8 @@ export function SetupRoute() {
 
   // Pick the chat defaults once everything they depend on has loaded: keep a
   // model the user already has, otherwise offer the tested download when the
-  // GPU can hold it. Without an NVIDIA card, chat setup starts skipped.
+  // GPU can hold it. Without an NVIDIA card, chat setup starts skipped; the
+  // Custom-setup Ollama default below may then replace that.
   useEffect(() => {
     if (chatDefaultsApplied.current || !settings || !setup || !models || !catalog) return;
     chatDefaultsApplied.current = true;
@@ -278,6 +280,21 @@ export function SetupRoute() {
       setRuntimeChoice("skip");
     }
   }, [catalog, mode, models, settings, setup?.assessment]);
+
+  // Without an NVIDIA card, managed llama.cpp could only run on the CPU, so
+  // Custom setup starts chat on Ollama once when it is installed or an AMD GPU
+  // can accelerate it. This runs after the Easy and chat defaults have settled
+  // on "skip"; Easy setup keeps chat skipped because it has no Ollama model
+  // picker.
+  useEffect(() => {
+    if (mode !== "custom" || ollamaDefaultApplied.current || !settings || !setup || !models) return;
+    ollamaDefaultApplied.current = true;
+    if (setup.hardware.nvidia || !(setup.hardware.amd || setup.hardware.ollama)) return;
+    if (runtimeChoice !== "skip" || initialRuntimeChoice(settings.llm) !== "managed") return;
+    if (models.models.some((model) => model.state === "ready")) return;
+    setRuntimeChoice("ollama");
+    patchLLM({ provider: "ollama" });
+  }, [mode, models, runtimeChoice, settings, setup]);
 
   const changeMode = (next: SetupMode) => {
     if (next === "easy") easyDefaultsApplied.current = false;

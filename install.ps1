@@ -45,6 +45,9 @@
 .PARAMETER LlamaBackend
     Managed llama.cpp backend: auto, cpu, or cuda. Auto selects CUDA only when an
     NVIDIA GPU is detected and the user accepts installing a missing CUDA Toolkit.
+    Without an NVIDIA GPU, auto uses Ollama instead of managed llama.cpp when
+    Ollama is already installed or an AMD GPU is detected; pass cpu to build the
+    managed CPU runtime anyway.
 
 .PARAMETER SkipLlamaBuild
     Skip the app-owned llama.cpp source build, then ensure Ollama is available.
@@ -373,7 +376,22 @@ function New-FreshConfiguration {
     $ensureOllama = $false
     $model = if ($null -eq $OllamaModel) { '' } else { $OllamaModel.Trim() }
     if ($setupLLM) {
-        $buildManaged = if ($SkipLlamaBuild) {
+        $preferOllama = $false
+        if (-not $SkipLlamaBuild -and $LlamaBackend -eq 'auto' -and -not (Resolve-MagicHandyExecutable -Name 'nvidia-smi')) {
+            $amdGPU = Get-MagicHandyAMDGPUName
+            $hasOllama = [bool](Resolve-MagicHandyExecutable -Name 'ollama')
+            $preferOllama = (Resolve-MagicHandyLLMRuntimePreference -HasNVIDIA $false -HasOllama $hasOllama -AMDGPUName $amdGPU) -eq 'ollama'
+            if ($preferOllama) {
+                Write-Host ''
+                if ($amdGPU) {
+                    Write-Host (Get-MagicHandyText -Key 'amd_detected' -Values @($amdGPU)) -ForegroundColor Green
+                }
+                $preferenceKey = if ($hasOllama) { 'ollama_preferred_existing' } else { 'ollama_preferred_install' }
+                Write-Host (Get-MagicHandyText -Key $preferenceKey)
+                Write-Host (Get-MagicHandyText -Key 'ollama_preferred_override') -ForegroundColor DarkGray
+            }
+        }
+        $buildManaged = if ($SkipLlamaBuild -or $preferOllama) {
             $false
         } elseif ($Yes) {
             $true

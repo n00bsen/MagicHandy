@@ -3341,5 +3341,10 @@
   "Resume from gentle hold": "穏やかな保持から再開",
   "Edge — gentle hold": "Edge — 穏やかな保持",
   "Return": "戻る",
-  "Autopilot returns in {seconds} s": "自動モードは {seconds} 秒後に再開"
+  "Autopilot returns in {seconds} s": "自動モードは {seconds} 秒後に再開",
+  "Detected {gpu}. Managed llama.cpp cannot use AMD graphics cards, but Ollama can, so Ollama is recommended here.": "{gpu} を検出しました。管理対象 llama.cpp は AMD のグラフィックカードを使用できませんが、Ollama は使用できるため、ここでは Ollama を推奨します。",
+  "Managed llama.cpp cannot use your AMD card, so only its CPU backend would run and replies would be too slow for live chat. Choose Ollama to chat on your GPU.": "管理対象 llama.cpp はお使いの AMD カードを使用できないため、CPU バックエンドしか動作せず、リアルタイムのチャットには応答が遅すぎます。GPU でチャットするには Ollama を選んでください。",
+  "Local chat on your {gpu} runs through Ollama": "{gpu} でのローカルチャットは Ollama で動作します",
+  "Managed llama.cpp cannot use AMD graphics cards. Choose Custom setup and Use my existing Ollama to chat on your GPU; Easy setup keeps chat off until then.": "管理対象 llama.cpp は AMD のグラフィックカードを使用できません。GPU でチャットするには、カスタムセットアップで「既存の Ollama を使用」を選んでください。それまで、かんたんセットアップではチャットはオフのままです。",
+  "AMD GPU": "AMD 製 GPU"
 }

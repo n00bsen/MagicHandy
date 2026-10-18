@@ -24,7 +24,8 @@ export function catalogFitNote(model: LLMCatalogModel, hardware: LLMCatalog["har
   }
 }
 
-export function catalogHardwareLine(catalog: LLMCatalog | null, nvidia: boolean, gpuName?: string): string {
+export function catalogHardwareLine(catalog: LLMCatalog | null, nvidia: boolean, gpuName?: string, amd?: boolean): string {
+  if (!nvidia && amd) return t("Detected {gpu}. Managed llama.cpp cannot use AMD graphics cards, but Ollama can, so Ollama is recommended here.", { gpu: gpuName || "AMD GPU" });
   if (!nvidia) return t("No NVIDIA graphics card was found. Local chat needs one; on the CPU alone, replies are too slow to use.");
   const vram = catalog?.hardware.vram_mib;
   if (vram) return t("Detected {gpu} with {memory} of graphics memory.", { gpu: gpuName || "NVIDIA GPU", memory: formatBytes(vram * MIB) });
