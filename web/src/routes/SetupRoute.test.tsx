@@ -388,15 +388,24 @@ describe("SetupRoute", () => {
     expect(screen.getByRole("radio", { name: /Managed llama\.cpp/ })).not.toHaveTextContent("Recommended");
   });
 
-  it("starts chat on Ollama when an AMD card is available", async () => {
+  it("starts chat on Ollama when an AMD card is available and saves that provider", async () => {
     vi.mocked(api.setupStatus).mockResolvedValue({ ...setupFixture, hardware: { platform: "windows/amd64", nvidia: false, cuda: false, amd: true, ollama: true, gpu_name: "AMD Radeon RX 7900 XTX", vram_mib: "24560" } });
     vi.mocked(api.llmCatalog).mockResolvedValue(catalogFixture("no_gpu", false));
+    vi.mocked(api.ollamaModels).mockResolvedValue({ available: true, models: [{ name: "gemma4:12b", size_bytes: 4096 }] as never });
     await openChatStep();
 
     await waitFor(() => expect(screen.getByRole("radio", { name: /Use my existing Ollama/ })).toBeChecked());
     expect(screen.getByRole("radio", { name: /Use my existing Ollama.*Recommended/i })).toBeChecked();
     expect(screen.getByText(/Detected AMD Radeon RX 7900 XTX\. Managed llama\.cpp cannot use AMD graphics cards/)).toBeVisible();
     expect(screen.queryByRole("radio", { name: /Managed llama\.cpp.*Recommended/i })).not.toBeInTheDocument();
+
+    // Earlier steps saved preferences and adopted the server's llama_cpp
+    // settings; the chat save must still persist the visible Ollama choice.
+    fireEvent.change(await screen.findByRole("combobox", { name: "Ollama model" }), { target: { value: "gemma4:12b" } });
+    await continueTo("Add voice features");
+    expect(api.saveSetupPreferences).toHaveBeenLastCalledWith(expect.objectContaining({
+      llm: expect.objectContaining({ provider: "ollama", model: "gemma4:12b" }),
+    }));
   });
 
   it("imports a selected model from an existing Ollama library during managed setup", async () => {

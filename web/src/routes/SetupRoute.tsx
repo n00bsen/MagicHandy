@@ -283,18 +283,18 @@ export function SetupRoute() {
 
   // Without an NVIDIA card, managed llama.cpp could only run on the CPU, so
   // Custom setup starts chat on Ollama once when it is installed or an AMD GPU
-  // can accelerate it. This runs after the Easy and chat defaults have settled
-  // on "skip"; Easy setup keeps chat skipped because it has no Ollama model
-  // picker.
+  // can accelerate it. It waits for the Chat AI step: earlier steps save
+  // preferences and adopt the server's settings, which would drop a draft
+  // provider. Easy setup has no chat step and keeps chat skipped.
   useEffect(() => {
-    if (mode !== "custom" || ollamaDefaultApplied.current || !settings || !setup || !models) return;
+    if (mode !== "custom" || currentStep !== "chat" || ollamaDefaultApplied.current || !settings || !setup || !models) return;
     ollamaDefaultApplied.current = true;
     if (setup.hardware.nvidia || !(setup.hardware.amd || setup.hardware.ollama)) return;
     if (runtimeChoice !== "skip" || initialRuntimeChoice(settings.llm) !== "managed") return;
     if (models.models.some((model) => model.state === "ready")) return;
     setRuntimeChoice("ollama");
     patchLLM({ provider: "ollama" });
-  }, [mode, models, runtimeChoice, settings, setup]);
+  }, [currentStep, mode, models, runtimeChoice, settings, setup]);
 
   const changeMode = (next: SetupMode) => {
     if (next === "easy") easyDefaultsApplied.current = false;
@@ -421,7 +421,10 @@ export function SetupRoute() {
     } else if (currentStep === "chat" && runtimeChoice !== "skip") {
       // A catalog model already in the store is used as is, not downloaded.
       const installed = runtimeChoice === "managed" ? selectedCatalogModel?.installed_model_id : undefined;
-      await savePreferences({ llm: installed ? { ...settings.llm, model: installed } : settings.llm });
+      // The selected engine decides the provider: an earlier step's save
+      // replaces the draft settings and can drop a provider patched before it.
+      const llm = runtimeChoice === "ollama" ? { ...settings.llm, provider: "ollama" as const } : settings.llm;
+      await savePreferences({ llm: installed ? { ...llm, model: installed } : llm });
     } else if (currentStep === "backup") {
       const installed = backupChoice && backupRuntime === "managed" ? selectedCatalogModel?.installed_model_id : undefined;
       await savePreferences({ llm: { ...settings.llm, retry_refusal_locally: backupChoice === true, ...(installed ? { model: installed } : {}) } });
